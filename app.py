@@ -4,7 +4,10 @@ from datetime import datetime
 import pymysql
 import secrets
 import os
+import shutil
 from utils.faceDetection import crop_faces
+import pandas as pd
+from utils.faceRecognition import predict
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://remote:password@localhost:3306/attendance_backend'
@@ -50,8 +53,18 @@ def addStudent():
 @app.route('/uploadAnchor', methods=['POST'])
 def uploadAnchor():
     rollNo=request.form['rollNo']
+    requestId=secrets.token_hex(16)
     file=request.files['image']
-    file.save(os.path.join(app.static_folder, 'uploads', rollNo, file.filename))
+
+    os.mkdir(os.path.join(app.static_folder, 'temps', requestId))
+    file.save(os.path.join(app.static_folder, 'temps', requestId, file.filename))
+
+    faceCount=crop_faces(os.path.join(app.static_folder, 'temps', requestId, file.filename), os.path.join(app.static_folder, 'uploads', rollNo))
+    print(faceCount)
+
+    # Delete the temp folder
+    shutil.rmtree(os.path.join(app.static_folder, 'temps', requestId))
+
     return "File Uploaded Successfully"
 
 @app.route('/attendance', methods=['POST'])
@@ -72,24 +85,50 @@ def attendance():
     facesFolder=os.path.join(folderPath, 'faces')
     os.mkdir(facesFolder)
     facesCount=crop_faces(filePath, facesFolder)
+    print('Faces Count: ', facesCount)
 
     # Face Recognition
-    # TODO: use the predict function to detect face and then create a dataframe for the detected faces
-    # Where rows will be represent the faces found and column will be the student rollNo
-    # The value will be the confidence of the face found
-    # Using this dataframe get the attendance.
+    students=Student.query.all()
+    rollNos=[student.rollNo for student in students]
+    facesFiles=os.listdir(facesFolder)
+    
+    df=pd.DataFrame(columns=rollNos, index=facesFiles)
+    df=df.fillna(-1.0)
 
-    # # Delete Temp Folder
-    # os.remove(folderPath)
+    for rollNo in rollNos:
+        for faceFile in facesFiles:
+            anchorImages=os.listdir(os.path.join(app.static_folder, 'uploads', str(rollNo)))
+            if len(anchorImages) == 0:
+                continue
+            
+            confidence=0.0
+            for anchorImage in anchorImages:
+                currConfidence=predict(os.path.join(app.static_folder, 'uploads', str(rollNo), anchorImage), os.path.join(facesFolder, faceFile))
+                confidence+=currConfidence
+            
+            confidence/=len(anchorImages)            
+            df.loc[faceFile, rollNo]=confidence
+
+    attendanceResult=[]
+    for rollNo in rollNos:
+        if df[rollNo].max() >= 0.5:
+            attendanceResult.append({
+                'rollNo': rollNo,
+                'status': 'Present',
+                'confidence': df[rollNo].max()
+            })
+        else:
+            attendanceResult.append({
+                'rollNo': rollNo,
+                'status': 'Absent',
+                'confidence': df[rollNo].max()
+            })
+
+    # # Delete the requestID folder 
+    # shutil.rmtree(folderPath)
 
     # Return a dummy json
-    return [{
-        'rollNo': '180101001',
-        'name': 'Dummy Student',
-        'branch': 'CSE',
-        'semester': 1,
-        'anchor_link': '/static/uploads/180101001/'
-    }]
+    return attendanceResult
 
 app.app_context().push()
 db.create_all()
