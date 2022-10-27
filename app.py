@@ -74,6 +74,10 @@ def attendance():
     facesCount=crop_faces(filePath, facesFolder)
 
     # Face Recognition
+    # TODO: use the predict function to detect face and then create a dataframe for the detected faces
+    # Where rows will be represent the faces found and column will be the student rollNo
+    # The value will be the confidence of the face found
+    # Using this dataframe get the attendance.
 
     # # Delete Temp Folder
     # os.remove(folderPath)
