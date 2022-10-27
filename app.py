@@ -124,8 +124,8 @@ def attendance():
                 'confidence': df[rollNo].max()
             })
 
-    # # Delete the requestID folder 
-    # shutil.rmtree(folderPath)
+    # Delete the requestID folder 
+    shutil.rmtree(folderPath)
 
     # Return a dummy json
     return attendanceResult
