@@ -5,7 +5,7 @@ import pymysql
 import secrets
 import os
 import shutil
-from utils.faceDetection import crop_faces
+from utils.faceDetection import crop_faces, crop_facesFromVideo
 import pandas as pd
 from utils.faceRecognition import predict
 
@@ -104,9 +104,10 @@ def attendance():
             confidence=0.0
             for anchorImage in anchorImages:
                 currConfidence=predict(os.path.join(app.static_folder, 'uploads', str(rollNo), anchorImage), os.path.join(facesFolder, faceFile))
-                confidence+=currConfidence
+                # confidence+=currConfidence
+                confidence=max(confidence, currConfidence)
             
-            confidence/=len(anchorImages)            
+            # confidence/=len(anchorImages)            
             df.loc[faceFile, rollNo]=confidence
 
     attendanceResult=[]
@@ -126,6 +127,70 @@ def attendance():
 
     # Delete the requestID folder 
     shutil.rmtree(folderPath)
+
+    # Return a dummy json
+    return attendanceResult
+
+@app.route('/videoAttendance', methods=['POST'])
+def videoAttendance():
+    file=request.files['video']
+    requestId=secrets.token_hex(16)
+    
+    folderPath=os.path.join(app.static_folder, 'temps', requestId)
+    os.mkdir(folderPath)
+
+    orgFolder=os.path.join(folderPath, 'org')
+    os.mkdir(orgFolder)
+
+    filePath=os.path.join(orgFolder, file.filename)
+    file.save(filePath)
+
+    # Cropping Faces
+    facesFolder=os.path.join(folderPath, 'faces')
+    os.mkdir(facesFolder)
+    facesCount=crop_facesFromVideo(filePath, facesFolder)
+    print('Faces Count: ', facesCount)
+
+    # # Face Recognition
+    # students=Student.query.all()
+    # rollNos=[student.rollNo for student in students]
+    # facesFiles=os.listdir(facesFolder)
+    
+    # df=pd.DataFrame(columns=rollNos, index=facesFiles)
+    # df=df.fillna(-1.0)
+
+    # for rollNo in rollNos:
+    #     for faceFile in facesFiles:
+    #         anchorImages=os.listdir(os.path.join(app.static_folder, 'uploads', str(rollNo)))
+    #         if len(anchorImages) == 0:
+    #             continue
+            
+    #         confidence=0.0
+    #         for anchorImage in anchorImages:
+    #             currConfidence=predict(os.path.join(app.static_folder, 'uploads', str(rollNo), anchorImage), os.path.join(facesFolder, faceFile))
+    #             # confidence+=currConfidence
+    #             confidence=max(confidence, currConfidence)
+            
+    #         # confidence/=len(anchorImages)            
+    #         df.loc[faceFile, rollNo]=confidence
+
+    attendanceResult=[]
+    # for rollNo in rollNos:
+    #     if df[rollNo].max() >= 0.5:
+    #         attendanceResult.append({
+    #             'rollNo': rollNo,
+    #             'status': 'Present',
+    #             'confidence': df[rollNo].max()
+    #         })
+    #     else:
+    #         attendanceResult.append({
+    #             'rollNo': rollNo,
+    #             'status': 'Absent',
+    #             'confidence': df[rollNo].max()
+    #         })
+
+    # # Delete the requestID folder 
+    # shutil.rmtree(folderPath)
 
     # Return a dummy json
     return attendanceResult
