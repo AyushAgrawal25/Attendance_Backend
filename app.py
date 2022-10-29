@@ -1,3 +1,4 @@
+from cProfile import label
 from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -5,6 +6,7 @@ import pymysql
 import secrets
 import os
 import shutil
+from utils.faceClassifier import extract_embeddings, getClassifier, load_shuffleFaceNet
 from utils.faceDetection import crop_faces, crop_facesFromVideo
 import pandas as pd
 from utils.faceRecognition import predict
@@ -194,6 +196,43 @@ def videoAttendance():
 
     # Return a dummy json
     return attendanceResult
+
+@app.route('/classify', methods=['POST'])
+def classify():
+    file = request.files['image']
+    requestId=secrets.token_hex(16)
+
+    folderPath=os.path.join(app.static_folder, 'temps', requestId)
+    os.mkdir(folderPath)
+
+    filePath=os.path.join(folderPath, file.filename)
+    file.save(filePath)
+
+    # Cropping Faces
+    facesFolder=os.path.join(folderPath, 'faces')
+    os.mkdir(facesFolder)
+
+    facesCount=crop_faces(filePath, facesFolder)
+    print('Faces Count: ', facesCount)
+
+    # Face Recognition and Classification
+    classifier=getClassifier()
+    model=load_shuffleFaceNet()
+    embeddings=[]
+    for face in os.listdir(facesFolder):
+        facePath=os.path.join(facesFolder, face)
+        embedding=extract_embeddings(facePath, model)
+        embeddings.append(embedding)
+
+    labels=classifier.predict_proba(embeddings)
+
+    # Delete the requestID folder
+    shutil.rmtree(folderPath)
+
+    # print(labels.tolist())
+    return {
+        'labels': labels.tolist()
+    }
 
 app.app_context().push()
 db.create_all()

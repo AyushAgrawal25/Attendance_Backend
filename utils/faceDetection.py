@@ -2,6 +2,7 @@ from mtcnn.mtcnn import MTCNN
 import os
 import cv2
 
+# Use retina CNN for cropping faces
 def crop_faces(imgPath, croppedFacesFolderPath):
     imgName=os.path.basename(imgPath)
 
