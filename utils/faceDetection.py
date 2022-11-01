@@ -22,16 +22,39 @@ def crop_faces(imgPath, croppedFacesFolderPath):
 
     return count-1
 
-def crop_facesFromVideo(videoPath, croppedFacesFolderPath):
+def crop_facesFromVideo(videoPath, croppedFacesFolderPath, rqFps=5):
     videoName=os.path.basename(videoPath)
 
     cap=cv2.VideoCapture(videoPath)
+    
+    # Get the number of frames
+    frameCount=int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    length=int(cap.get(cv2.CAP_PROP_FRAME_COUNT)/cap.get(cv2.CAP_PROP_FPS))
+    
+    currFps=cap.get(cv2.CAP_PROP_FPS)
+
+    frameInterval=int(currFps/rqFps)
+
+    print('Frame Count: ', frameCount)
+    print('Frame Interval: ', frameInterval)
+
     detector=MTCNN()
     count=1
+    frameCount=0
     while True:
-        ret, frame=cap.read()
+        ret, frame=cap.read(cv2.IMREAD_GRAYSCALE)
+
+        # TEMP:
+        # Rotate the frame by 180 degrees
+        frame=cv2.rotate(frame, cv2.ROTATE_180)
+
         if not ret:
             break
+
+        frameCount+=1
+        if (frameCount % frameInterval)>0:
+            continue
 
         faces=detector.detect_faces(frame)
         for face in faces:

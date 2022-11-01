@@ -56,17 +56,27 @@ def addStudent():
 def uploadAnchor():
     rollNo=request.form['rollNo']
     requestId=secrets.token_hex(16)
-    file=request.files['image']
-
     os.mkdir(os.path.join(app.static_folder, 'temps', requestId))
-    file.save(os.path.join(app.static_folder, 'temps', requestId, file.filename))
 
-    faceCount=crop_faces(os.path.join(app.static_folder, 'temps', requestId, file.filename), os.path.join(app.static_folder, 'uploads', rollNo))
-    print(faceCount)
+    # Check whether image is present in request.files
+    if request.files.get('image'):
+        file=request.files['image']    
+        file.save(os.path.join(app.static_folder, 'temps', requestId, file.filename))
+
+        faceCount=crop_faces(os.path.join(app.static_folder, 'temps', requestId, file.filename), os.path.join(app.static_folder, 'uploads', rollNo))
+        print(faceCount)
+
+
+    if request.files.get('video'):
+        file=request.files['video']
+        file.save(os.path.join(app.static_folder, 'temps', requestId, file.filename))
+
+        faceCount=crop_facesFromVideo(os.path.join(app.static_folder, 'temps', requestId, file.filename), os.path.join(app.static_folder, 'uploads', rollNo))
+        print(faceCount)
 
     # Delete the temp folder
     shutil.rmtree(os.path.join(app.static_folder, 'temps', requestId))
-
+    
     return "File Uploaded Successfully"
 
 @app.route('/attendance', methods=['POST'])
@@ -137,6 +147,8 @@ def attendance():
 def videoAttendance():
     file=request.files['video']
     requestId=secrets.token_hex(16)
+
+    print(requestId)
     
     folderPath=os.path.join(app.static_folder, 'temps', requestId)
     os.mkdir(folderPath)
@@ -246,4 +258,7 @@ def make_directories():
 
 if __name__ == "__main__":
     make_directories()
-    app.run(debug=True)
+    app.run(
+        debug=True,
+        host='0.0.0.0'
+    )   
