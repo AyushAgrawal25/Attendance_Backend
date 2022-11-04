@@ -236,14 +236,18 @@ def classify():
         embedding=extract_embeddings(facePath, model)
         embeddings.append(embedding)
 
-    labels=classifier.predict_proba(embeddings)
+    probs=classifier.predict_proba(embeddings)
+    results=classifier.predict(embeddings)
+    labels=classifier.classes_
 
     # Delete the requestID folder
     shutil.rmtree(folderPath)
 
     # print(labels.tolist())
     return {
-        'labels': labels.tolist()
+        'labels': labels.tolist(),
+        'results': results.tolist(),
+        'probs': probs.tolist()
     }
 
 app.app_context().push()

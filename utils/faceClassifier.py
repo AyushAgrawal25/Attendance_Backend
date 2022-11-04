@@ -72,7 +72,7 @@ def train():
     lables, emeddings=extract_data('./static/uploads/', model)
     print(lables)
 
-    # clf.fit(emeddings, lables)
+    clf.fit(emeddings, lables)
 
     # Save the model
     torch.save(clf, './model/faceClassifier.ckpt')
