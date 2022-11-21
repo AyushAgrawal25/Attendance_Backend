@@ -237,8 +237,17 @@ def classify():
         embeddings.append(embedding)
 
     probs=classifier.predict_proba(embeddings)
-    results=classifier.predict(embeddings)
+    mx_prob_label=classifier.predict(embeddings)
     labels=classifier.classes_
+    results={}
+    for i in range(len(mx_prob_label)):
+        label_idx=0
+        for j in range(len(labels)):
+            if labels[j]==mx_prob_label[i]:
+                label_idx=j
+                break
+        
+        results[mx_prob_label[i]]=probs[i][label_idx]
 
     # Delete the requestID folder
     shutil.rmtree(folderPath)
@@ -246,7 +255,7 @@ def classify():
     # print(labels.tolist())
     return {
         'labels': labels.tolist(),
-        'results': results.tolist(),
+        'results': results,
         'probs': probs.tolist()
     }
 
