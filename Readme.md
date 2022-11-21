@@ -33,8 +33,20 @@ source env/bin/activate
 pip3 install -r requirements.txt
 ```
 
+In case installation got killed try using --no-cache-dir
+
+```bash
+pip3 install --no-cache-dir -r requirements.txt
+```
+
 ### 5 - Run the server
 
 ```bash
 python3 app.py
+```
+
+In case issue of LibGL.so.1: cannot open shared object file: No such file or directory
+
+```bash
+sudo apt-get install ffmpeg libsm6 libxext6  -y
 ```
