@@ -263,6 +263,9 @@ app.app_context().push()
 db.create_all()
 
 def make_directories():
+    if not os.path.exists(app.static_folder):
+        os.mkdir(app.static_folder)
+
     if not os.path.exists(os.path.join(app.static_folder, 'temps')):
         os.mkdir(os.path.join(app.static_folder, 'temps'))
     
