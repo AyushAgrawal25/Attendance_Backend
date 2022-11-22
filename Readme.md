@@ -42,11 +42,71 @@ pip3 install --no-cache-dir -r requirements.txt
 ### 5 - Run the server
 
 ```bash
-python3 app.py
+python3 run.py
 ```
 
 In case issue of LibGL.so.1: cannot open shared object file: No such file or directory
 
 ```bash
 sudo apt-get install ffmpeg libsm6 libxext6  -y
+```
+
+### 6 - Install gunicorn
+
+```bash
+sudo apt-get install gunicorn
+```
+
+### 7 - Run the server using gunicorn
+
+```bash
+gunicorn -w 3 run:app
+```
+
+### 8 - Install supervisor
+
+```bash
+sudo apt-get install supervisor
+```
+
+### 9 - Create a supervisor config file
+
+```bash
+sudo nano /etc/supervisor/conf.d/attendance.conf
+```
+
+### 10 - Add the following to the file
+
+```bash
+[program:attendance]
+command=/home/ayush/Attendance_Backend/env/bin/gunicorn -w 3 run:app
+directory=/home/ayush/Attendance_Backend
+user=ayush
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+stderr_logfile=/var/log/attendance.err.log
+stdout_logfile=/var/log/attendance.out.log
+```
+
+### 11 - Update supervisor
+
+```bash
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl start attendance
+```
+
+### 12 - Check the status
+
+```bash
+sudo supervisorctl status
+```
+
+### 13 - Check the logs
+
+```bash
+sudo tail -f /var/log/attendance.err.log
+sudo tail -f /var/log/attendance.out.log
 ```
