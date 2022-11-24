@@ -227,6 +227,9 @@ def classify():
     facesCount=crop_faces(filePath, facesFolder)
     print('Faces Count: ', facesCount)
 
+    if(facesCount==0):
+        return "No Faces Found", 400
+
     # Face Recognition and Classification
     classifier=getClassifier()
     model=load_shuffleFaceNet()
