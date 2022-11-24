@@ -228,6 +228,8 @@ def classify():
     print('Faces Count: ', facesCount)
 
     if(facesCount==0):
+        # Delete the requestID folder
+        shutil.rmtree(folderPath)
         return "No Faces Found", 400
 
     # Face Recognition and Classification
