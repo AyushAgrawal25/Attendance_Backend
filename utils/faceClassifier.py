@@ -8,7 +8,7 @@ from torchvision import transforms
 from core.model import ShuffleFaceNet
 import numpy as np
 import os
-# from
+import time
 
 def load_shuffleFaceNet():
     model=ShuffleFaceNet()
@@ -50,6 +50,7 @@ def extract_data(dir_path, model):
 # TODO: Learn the Logistic Regression classifier once again.
 # TODO: Try creating a threshold for the classifier.
 def train():
+    print('Classification Model Training:')
     softmax=LogisticRegression(
         solver='lbfgs',
         multi_class='multinomial',
@@ -69,11 +70,19 @@ def train():
 
     model=load_shuffleFaceNet()
 
+    startTime=time.time()
+    print('Extracting Data...')
     lables, emeddings=extract_data('./static/uploads/', model)
-    print(lables)
+    endTime=time.time()
+    print('Data Extraction Time: ', endTime-startTime)
+    print('{} Labels and {} Embeddings'.format(len(lables), len(emeddings)))
 
+    print('Training Classification Model using Transfer Learning...')
+    startTime=time.time()
     clf.fit(emeddings, lables)
-
+    endTime=time.time()
+    print('Training Time: {} seconds'.format(endTime-startTime))
+    
     # Save the model
     torch.save(clf, './model/faceClassifier.ckpt')
     return clf.best_estimator_

@@ -22,7 +22,7 @@ def crop_faces(imgPath, croppedFacesFolderPath):
 
     return count-1
 
-def crop_facesFromVideo(videoPath, croppedFacesFolderPath, rqFps=5):
+def crop_facesFromVideo(videoPath, croppedFacesFolderPath, rqFps=2):
     videoName=os.path.basename(videoPath)
 
     cap=cv2.VideoCapture(videoPath)
