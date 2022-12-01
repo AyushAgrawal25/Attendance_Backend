@@ -228,6 +228,14 @@ class CosFace_loss(nn.Module):
         return logits, margin_logits
 
 
+def load_shuffleFaceNet():
+    model=ShuffleFaceNet()
+    ckpt=torch.load('./model/060.ckpt', map_location='cpu')
+    model.load_state_dict(ckpt['net_state_dict'])
+    model.eval()
+    return model
+
+
 if __name__ == "__main__":
     # input = Variable(torch.FloatTensor(2, 3, 112, 96))
     net = ShuffleFaceNet()
